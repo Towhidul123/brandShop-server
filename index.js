@@ -127,6 +127,27 @@ app.delete('/addToCart/:id', async(req,res) =>{
 
 //update
 
+  app.put('/product/:id', async(req,res)=>{
+    const id = req.params.id;
+    const filter = {_id: new ObjectId(id)}
+    const options = {upsert : true};
+    const updatedProduct = req.body;
+    const Product = {
+      $set:{
+        image:updatedProduct.image, 
+        name:updatedProduct.name, 
+        BrandName:updatedProduct.BrandName, 
+        Type:updatedProduct.Type, 
+        Price:updatedProduct.Price,
+         rating:updatedProduct.rating
+      }
+    }
+
+    const result = await brandCollection.updateOne(filter,Product ,options)
+    res.send(result);
+  })
+
+
 app.get('/product/:id', async(req,res)=>{
   const id = req.params.id;
   const query = {_id: new ObjectId(id)}

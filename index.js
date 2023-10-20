@@ -1,7 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 require('dotenv').config();
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const app = express();
 const port = process.env.PORT || 5000;
 
@@ -9,10 +9,6 @@ const port = process.env.PORT || 5000;
 app.use(cors());
 app.use(express.json());
 
-
-
-console.log(process.env.DB_USER);
-console.log(process.env.DB_PASSWORD);
 
 
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASSWORD}@cluster0.dc6i71y.mongodb.net/?retryWrites=true&w=majority`;
@@ -34,33 +30,75 @@ async function run() {
 
 
     const brandCollection = client.db('carDB').collection('car');
+    const dataCollection = client.db('carDB').collection('data');
+    const userCollection = client.db('carDB').collection('user');
 
+    //multiple data read for brands in home page
 
-    app.get('/product', async(req,res)=>{
-        const cursor = brandCollection.find();
-        const result = await cursor.toArray();
-        res.send(result);
+    app.get('/mainPageProduct', async (req, res) => {
+      const cursor = dataCollection.find();
+      const result = await cursor.toArray();
+      res.send(result);
     })
+  
 
 
-
-    app.post('/product', async(req,res) =>{
-        const newProduct = req.body;
-        console.log(newProduct);
-        const result = await brandCollection.insertOne(newProduct);
+    app.get('/products/:brandName', async (req, res) => {
+      const brandName = req.params.brandName;
+      const query = { BrandName: brandName }; 
+    
+      try {
+        const result = await brandCollection.find(query).toArray();
         res.send(result);
-    })
+      } catch (error) {
+        console.error('Error fetching data:', error);
+        res.status(500).send('Internal Server Error');
+      }
+    });
+
+
+      //api based on ID
+      app.get('/product/:productId', async (req, res) => {
+        const productId = req.params.productId;
+      
+        console.log('Received productId:', productId);
+        
+        try {
+          const query = {_id: new ObjectId(productId) }; 
+          const result = await dataCollection.findOne(query);
+      
+          if (!result) {
+            res.status(404).json({ error: 'Product not found' }); 
+            return;
+          }
+      
+          res.json(result);
+        } catch (error) {
+          console.error('Error fetching product details:', error);
+          res.status(500).json({ error: 'Internal Server Error' });
+        }
+      });
+      
+      
+
+
+  app.post('/product', async (req, res) => {
+    const newProduct = req.body;
+    console.log(newProduct);
+    const result = await brandCollection.insertOne(newProduct);
+    res.send(result);
+  })
 
 
 
 
-    // Send a ping to confirm a successful connection
-    await client.db("admin").command({ ping: 1 });
-    console.log("Pinged your deployment. You successfully connected to MongoDB!");
-  } finally {
-    // Ensures that the client will close when you finish/error
-   // await client.close();
-  }
+  // Send a ping to confirm a successful connection
+  await client.db("admin").command({ ping: 1 });
+  console.log("Pinged your deployment. You successfully connected to MongoDB!");
+} finally {
+  // Ensures that the client will close when you finish/error
+  // await client.close();
+}
 }
 run().catch(console.dir);
 
@@ -71,10 +109,10 @@ run().catch(console.dir);
 
 
 
-app.get('/',(req,res)=>{
-    res.send('server is running')
+app.get('/', (req, res) => {
+  res.send('server is running')
 })
 
-app.listen(port,() =>{
-    console.log(`server is running on port: ${port} `)
+app.listen(port, () => {
+  console.log(`server is running on port: ${port} `)
 })

@@ -61,11 +61,13 @@ async function run() {
       app.get('/product/:productId', async (req, res) => {
         const productId = req.params.productId;
       
-        console.log('Received productId:', productId);
+       // console.log('Received productId:', productId);
         
         try {
           const query = {_id: new ObjectId(productId) }; 
-          const result = await dataCollection.findOne(query);
+          //console.log(query);
+          const result = await brandCollection.findOne(query);
+          //console.log(result);
       
           if (!result) {
             res.status(404).json({ error: 'Product not found' }); 
@@ -90,6 +92,47 @@ async function run() {
   })
 
 
+  //add to cart
+  app.post('/addToCart', async (req, res) => {
+    try {
+      const newUserProduct = req.body.product;
+      const result = await userCollection.insertOne(newUserProduct);
+      res.send(result);
+    } catch (error) {
+      console.error('Error adding to cart:', error);
+      res.status(500).json({ error: 'Internal Server Error' });
+    }
+  });
+
+// reading cart
+  app.get('/addToCart', async (req, res) => {
+    const cursor = userCollection.find();
+    const result = await cursor.toArray();
+    res.send(result);
+  })
+
+//deleting from cart
+
+app.delete('/addToCart/:id', async(req,res) =>{
+  const id = req.params.id;
+  //console.log(req.params.id)
+  const query = {_id: new ObjectId(id)}
+ // console.log(query);
+ 
+  const result = await userCollection.deleteOne(query);
+ // console.log(result);
+  res.send(result);
+})
+
+
+//update
+
+app.get('/product/:id', async(req,res)=>{
+  const id = req.params.id;
+  const query = {_id: new ObjectId(id)}
+  const result = await brandCollection.findOne(query);
+  res.send(result);
+})
 
 
   // Send a ping to confirm a successful connection

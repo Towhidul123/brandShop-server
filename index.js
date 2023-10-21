@@ -26,7 +26,7 @@ const client = new MongoClient(uri, {
 async function run() {
   try {
     // Connect the client to the server	(optional starting in v4.7)
-    await client.connect();
+   // await client.connect();
 
 
     const brandCollection = client.db('carDB').collection('car');
@@ -92,10 +92,35 @@ async function run() {
   })
 
 
+
+  app.get('/addToCart/:id', async (req, res) => {
+    const productId = req.params.id;
+  
+   // console.log('Received productId:', productId);
+    
+    try {
+      const query = {_id: new ObjectId(productId) }; 
+      //console.log(query);
+      const result = await brandCollection.findOne(query);
+      //console.log(result);
+  
+      if (!result) {
+        res.status(404).json({ error: 'Product not found' }); 
+        return;
+      }
+  
+      res.json(result);
+    } catch (error) {
+      console.error('Error fetching product details:', error);
+      res.status(500).json({ error: 'Internal Server Error' });
+    }
+  });
+  
+
   //add to cart
   app.post('/addToCart', async (req, res) => {
     try {
-      const newUserProduct = req.body.product;
+      const newUserProduct = req.body;
       const result = await userCollection.insertOne(newUserProduct);
       res.send(result);
     } catch (error) {
@@ -115,12 +140,12 @@ async function run() {
 
 app.delete('/addToCart/:id', async(req,res) =>{
   const id = req.params.id;
-  //console.log(req.params.id)
+  console.log(req.params.id)
   const query = {_id: new ObjectId(id)}
- // console.log(query);
+  console.log(query);
  
   const result = await userCollection.deleteOne(query);
- // console.log(result);
+  console.log(result);
   res.send(result);
 })
 
